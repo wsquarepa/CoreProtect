@@ -1,0 +1,48 @@
+name: Sync Fork with Upstream
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # update upstream every day. should be sufficient.
+
+  workflow_dispatch: 
+    inputs:
+      sync_test_mode:
+        description: 'Fork Sync Test Mode'
+        type: boolean
+        default: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Set Upstream Repository
+        run: |
+          git remote add upstream https://github.com/PlayPro/CoreProtect.git
+          git fetch upstream
+
+      - name: Sync Upstream Changes
+        id: sync
+        uses: aormsby/Fork-Sync-With-Upstream-action@v3.4.1
+        with:
+          target_sync_branch: master
+          target_repo_token: ${{ secrets.GITHUB_TOKEN }}
+          upstream_sync_branch: master
+          upstream_sync_repo: PlayPro/CoreProtect
+
+          test_mode: ${{ inputs.sync_test_mode }}
+        
+      - name: New commits found
+        if: steps.sync.outputs.has_new_commits == 'true'
+        run: echo "New Commits Found."
+      
+      - name: No new commits
+        if: steps.sync.outputs.has_new_commits == 'false'
+        run: echo "No New Commits."
+        
+      - name: Show value of 'has_new_commits'
+        run: echo ${{ steps.sync.outputs.has_new_commits }}
