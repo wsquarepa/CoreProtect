@@ -39,6 +39,13 @@ jobs:
       - name: New commits found
         if: steps.sync.outputs.has_new_commits == 'true'
         run: echo "New Commits Found."
+
+      - name: Trigger Build Pre-Release Workflow
+        if: steps.sync.outputs.has_new_commits == 'true'
+        uses: peter-evans/repository-dispatch@v2
+        with:
+          event-type: build-prerelease
+          token: ${{ secrets.GITHUB_TOKEN }}
       
       - name: No new commits
         if: steps.sync.outputs.has_new_commits == 'false'
